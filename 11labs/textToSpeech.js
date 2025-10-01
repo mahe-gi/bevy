@@ -8,7 +8,7 @@ async function textToaudio(){
 
 try{
   const audio = await elevenlabs.textToSpeech.convert('JBFqnCBsd6RMkjVDRZzb', {
-  text: 'welcome to digital bevy , how are you doing today? ',
+  text: 'welcome to digital bevy',
   modelId: 'eleven_multilingual_v2',
   outputFormat: 'mp3_44100_128',
 });
@@ -43,28 +43,5 @@ console.log(transcription.text);
 }
 
 
-
-async function timeStampAudiotoText() {
-
-try{
-const response = await fetch(
-    "https://storage.googleapis.com/eleven-public-cdn/audio/marketing/nicole.mp3"
-);
-const audioBlob = new Blob([await response.arrayBuffer()], { type: "audio/mp3" });
-const transcript = await elevenlabs.forcedAlignment.create({
-    file: audioBlob,
-    text: "With a soft and whispery American accent, I'm the ideal choice for creating ASMR content, meditative guides, or adding an intimate feel to your narrative projects."
-})
-console.log(transcript);
-}catch(e){
-  console.log(e)
-
-}
-  
-}
-
-// audioToText();
-
-// textToaudio();
-
-// timeStampAudiotoText();
+audioToText();
+textToaudio();
