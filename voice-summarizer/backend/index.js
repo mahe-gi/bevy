@@ -32,8 +32,35 @@ app.get("/health", (req, res) => {
   res.json({ 
     status: "OK", 
     timestamp: new Date().toISOString(),
-    apiKeyConfigured: !!ELEVENLABS_API_KEY 
+    apiKeyConfigured: !!ELEVENLABS_API_KEY,
+    sdkVersion: "2.17.0"
   });
+});
+
+// ---- Debug STT Parameters Endpoint ----
+app.post("/debug-stt", async (req, res) => {
+  try {
+    const { audioData, mimeType } = req.body;
+    
+    if (!audioData) {
+      return res.status(400).json({ error: "Audio data required for debug" });
+    }
+
+    const audioBuffer = Buffer.from(audioData.split(',')[1], 'base64');
+    const audioBlob = new Blob([audioBuffer], { type: mimeType || "audio/mp3" });
+
+    const debugInfo = {
+      audioSize: audioBuffer.length,
+      blobSize: audioBlob.size,
+      blobType: audioBlob.type,
+      mimeType: mimeType,
+      apiKey: ELEVENLABS_API_KEY ? "configured" : "missing"
+    };
+
+    res.json(debugInfo);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ---- TTS Endpoint ----
@@ -130,13 +157,14 @@ app.post("/stt", async (req, res) => {
       const audioBuffer = Buffer.from(audioData.split(',')[1], 'base64');
       const audioBlob = new Blob([audioBuffer], { type: mimeType || "audio/mp3" });
 
-      // Use the official SDK for speech-to-text
+      console.log("Audio blob created:", audioBlob.size, "bytes, type:", audioBlob.type);
+
+      // Use the official SDK for speech-to-text - simplified approach
+      console.log("Attempting STT conversion with basic parameters...");
+      
       const transcription = await elevenlabs.speechToText.convert({
         file: audioBlob,
-        model_id: "scribe_v1", // Only supported model for now
-        tag_audio_events: true, // Tag audio events like laughter, applause, etc.
-        language_code: "eng", // Language of the audio file
-        diarize: true, // Whether to annotate who is speaking
+        modelId: "scribe_v1"
       });
 
       console.log("STT Success:", transcription);
@@ -204,10 +232,7 @@ app.post("/stt-file", upload.single('audio'), async (req, res) => {
       // Use the official SDK for speech-to-text
       const transcription = await elevenlabs.speechToText.convert({
         file: audioBlob,
-        model_id: "scribe_v1",
-        tag_audio_events: true,
-        language_code: "eng",
-        diarize: true,
+        modelId: "scribe_v1"
       });
 
       console.log("STT File Success:", transcription);

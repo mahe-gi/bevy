@@ -1,10 +1,12 @@
 import { useState } from "react";
+import "./App.css";
 
 function App() {
   const [text, setText] = useState("");
   const [audioSrc, setAudioSrc] = useState("");
   const [file, setFile] = useState(null);
   const [transcript, setTranscript] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Call backend for TTS
   const handleTTS = async () => {
@@ -14,6 +16,7 @@ function App() {
         return;
       }
 
+      setIsProcessing(true);
       const response = await fetch("http://localhost:3000/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,6 +35,8 @@ function App() {
     } catch (error) {
       console.error("TTS Error:", error);
       alert("Failed to generate speech. Check console for details.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -43,6 +48,7 @@ function App() {
         return;
       }
 
+      setIsProcessing(true);
       console.log("Processing audio file:", file.name, file.type);
 
       const reader = new FileReader();
@@ -78,144 +84,127 @@ function App() {
         } catch (error) {
           console.error("STT Error:", error);
           alert("Failed to transcribe audio. Check console for details.");
+        } finally {
+          setIsProcessing(false);
         }
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("File reading error:", error);
       alert("Failed to read the audio file.");
+      setIsProcessing(false);
     }
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      backgroundColor: '#f5f5f5', 
-      padding: '20px',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <h1 style={{ 
-        fontSize: '2.5rem', 
-        fontWeight: 'bold', 
-        marginBottom: '30px',
-        color: '#333'
-      }}>
-        AI Audio Playground 🎙️
-      </h1>
-
-      {/* TTS Section */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '20px', 
-        borderRadius: '12px', 
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', 
-        width: '100%', 
-        maxWidth: '400px', 
-        marginBottom: '30px'
-      }}>
-        <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: '600', 
-          marginBottom: '15px',
-          color: '#555'
-        }}>
-          Text to Speech
-        </h2>
-        <textarea
-          style={{ 
-            width: '100%', 
-            border: '1px solid #ddd', 
-            borderRadius: '6px', 
-            padding: '10px', 
-            marginBottom: '15px',
-            fontSize: '14px',
-            fontFamily: 'inherit',
-            resize: 'vertical',
-            minHeight: '80px'
-          }}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Enter text here..."
-        />
-        <button
-          onClick={handleTTS}
-          style={{ 
-            backgroundColor: '#3b82f6', 
-            color: 'white', 
-            padding: '10px 20px', 
-            borderRadius: '6px',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          Generate Speech
-        </button>
-        {audioSrc && (
-          <audio 
-            controls 
-            src={audioSrc} 
-            style={{ marginTop: '15px', width: '100%' }}
-          />
-        )}
-      </div>
-
-      {/* STT Section */}
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '20px', 
-        borderRadius: '12px', 
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', 
-        width: '100%', 
-        maxWidth: '400px'
-      }}>
-        <h2 style={{ 
-          fontSize: '1.5rem', 
-          fontWeight: '600', 
-          marginBottom: '15px',
-          color: '#555'
-        }}>
-          Speech to Text
-        </h2>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={(e) => setFile(e.target.files[0])}
-          style={{ marginBottom: '15px', fontSize: '14px' }}
-        />
-        <button
-          onClick={handleSTT}
-          style={{ 
-            backgroundColor: '#10b981', 
-            color: 'white', 
-            padding: '10px 20px', 
-            borderRadius: '6px',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          Transcribe Audio
-        </button>
-        {transcript && (
-          <p style={{ 
-            marginTop: '15px', 
-            padding: '15px', 
-            border: '1px solid #e5e5e5', 
-            borderRadius: '6px', 
-            backgroundColor: '#f9f9f9',
-            fontSize: '14px',
-            lineHeight: '1.5'
-          }}>
-            {transcript}
+    <div className="app-container">
+      <div className="app-content">
+        {/* Header */}
+        <div className="header">
+          <h1 className="header-title">
+            Voice AI Platform
+          </h1>
+          <p className="header-subtitle">
+            Professional text-to-speech and speech-to-text services
           </p>
-        )}
+        </div>
+
+        {/* TTS Card */}
+        <div className="card card-tts">
+          <div className="card-header">
+            <h2 className="card-title">
+              Text to Speech
+            </h2>
+            <p className="card-description">
+              Convert written text into natural-sounding speech
+            </p>
+          </div>
+          
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Type your message here..."
+            className="textarea"
+          />
+          
+          <button
+            onClick={handleTTS}
+            disabled={isProcessing || !text.trim()}
+            className="button button-primary"
+          >
+            {isProcessing ? 'Processing...' : 'Generate Speech'}
+          </button>
+
+          {audioSrc && (
+            <audio
+              controls
+              src={audioSrc}
+              className="audio-player"
+            />
+          )}
+        </div>
+
+        {/* STT Card */}
+        <div className="card">
+          <div className="card-header">
+            <h2 className="card-title">
+              Speech to Text
+            </h2>
+            <p className="card-description">
+              Transcribe audio files into accurate text
+            </p>
+          </div>
+
+          <div className="file-upload">
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => setFile(e.target.files[0])}
+              className="file-input"
+              id="audioFile"
+            />
+            <label htmlFor="audioFile" className="file-label">
+              {file ? (
+                <div>
+                  <div className="file-name">
+                    {file.name}
+                  </div>
+                  <div className="file-instruction">
+                    Click to select a different file
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="file-placeholder-title">
+                    Select Audio File
+                  </div>
+                  <div className="file-placeholder-subtitle">
+                    Supports MP3, WAV, M4A formats
+                  </div>
+                </div>
+              )}
+            </label>
+          </div>
+
+          <button
+            onClick={handleSTT}
+            disabled={isProcessing || !file}
+            className="button button-primary button-full-width"
+          >
+            {isProcessing ? 'Processing...' : 'Transcribe Audio'}
+          </button>
+
+          {transcript && (
+            <div className="transcript-result">
+              <h3 className="transcript-title">
+                Transcription Result
+              </h3>
+              <p className="transcript-text">
+                {transcript}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
